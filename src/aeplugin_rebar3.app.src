@@ -1,0 +1,15 @@
+{application, aeplugin_rebar3,
+ [{description, "Rebar3 Aeternity plugin build support"},
+  {vsn, "0.0.1"},
+  {registered, []},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, ["Aeternity Core Team"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/aeternity/aeplugin_rebar3"}]}
+ ]}.

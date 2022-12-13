@@ -1,4 +1,4 @@
--module(aeplugin_rebar3_plugin).
+-module(aeplugin_rebar3).
 
 -export([init/1,
          do/1,

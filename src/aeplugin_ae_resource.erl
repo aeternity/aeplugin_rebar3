@@ -25,11 +25,10 @@ init(Type, State) ->
 lock(AppInfo, State) ->
     lock_(rebar_app_info:dir(AppInfo), rebar_app_info:source(AppInfo), State).
 
-lock_(AppDir, {ae, Name} = Lock, State) ->
+lock_(_AppDir, Lock, _State) when element(1,Lock) == ae ->
     Lock.
 
-
-needs_update(AppInfo, State) ->
+needs_update(_AppInfo, _State) ->
     %% TODO: Figure out how this should work
     false.
 
@@ -38,17 +37,6 @@ download(TmpDir, AppInfo, State, LState) ->
 
 make_vsn(AppInfo, LState) ->
     rebar_resource_v2:make_vsn(ae_dep_app_info(AppInfo, LState, undefined), unknown).
-
-
-is_ae_dep(App) when is_binary(App) ->
-    is_ae_dep_(App);
-is_ae_dep(App) when is_atom(App) ->
-    is_ae_dep_(atom_to_binary(App, utf8));
-is_ae_dep(AppInfo) ->
-    is_ae_dep_(rebar_app_info:name(AppInfo)).
-
-is_ae_dep_(App) ->
-    lists:keymember(App, 1, persistent_term:get({?MODULE, ae_rebar_lock}, [])).
 
 get_ae_root(State) ->
     CacheKey = {?MODULE, ae_root},
@@ -120,7 +108,7 @@ fetch_rebar_lock({git, URI, Ref}) ->
             case erl_scan:string(binary_to_list(Body)) of
                 {ok, Tokens, _} ->
                     {ok, parse_tokens_as_terms(Tokens)};
-                Error ->
+                _Error ->
                     error(parse_error)
             end;
         Other ->
@@ -147,21 +135,8 @@ ae_deps(State) ->
     end.
 
 ae_deps_file(State) ->
-    case rebar_state:project_apps(State) of
-        [App] ->
-            OutDir = rebar_app_info:out_dir(App),
-            case lists:reverse(filename:split(OutDir)) of
-                [_,"lib"|BuildRev] ->
-                    Dir = filename:join(lists:reverse(BuildRev)),
-                    filename:join(Dir, "aeternity_deps.eterm");
-                _ ->
-                    rebar_api:warn("Unfamiliar out_dir: ~p", [OutDir]),
-                    undefined
-            end;
-        Other ->
-            rebar_api:warn("Unfamiliar app environment: ~p", [Other]),
-            undefined
-    end.
+    BaseDir = rebar_dir:base_dir(State),
+    filename:join(BaseDir, "aeternity_deps.eterm").
 
 save_term(Term, File) ->
     rebar_api:info("Saving AE deps to ~p", [File]),

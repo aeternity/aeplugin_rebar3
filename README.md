@@ -21,7 +21,7 @@ To activate the plugin, add it to the `rebar.config` file of your AE node plugin
 
 ```erlang
 {plugins, [
-           {aeplugin_rebar3, {git, "git@github.com:aeternity/aeplugin_rebar3", {branch,"master"}}}
+           {aeplugin_rebar3, {git, "https://github.com/aeternity/aeplugin_rebar3", {branch,"master"}}}
           ]}.
 ```
 
@@ -61,9 +61,9 @@ Example:
 
 The `ae_plugin` command depends on `compile`, so the code will be automatically compiled first.
 
-The archive file will be placed in the top directory of your plugin application,
-and named `PluginName-Vsn.ez`. Example:
+The archive file will be placed in the profile build directory (e.g. `_build/default`) of your
+plugin application, and named `PluginName.ez`. Example:
 
 ```
-aeplugin_dev_mode-0.1.0.ez
+aeplugin_dev_mode.ez
 ```

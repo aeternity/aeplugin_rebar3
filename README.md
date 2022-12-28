@@ -42,18 +42,21 @@ A different root can be specified in one of two ways, listed in order of priorit
 
 ### Name Aeternity dependencies
 
-Dependencies that are also dependencies of the Aeternity node, are listed as `{App, {ae}}`.
+Dependencies that are also dependencies of the Aeternity node, are listed as `{App, {ae, App}}`.
 
 Example:
 ```erlang
 {deps, [
-        {lager, {ae}},
-        {cowboy, {ae}},
-        {aeserialization, {ae}},
-        {jsx, {ae}},
+        {lager, {ae, lager}},
+        {cowboy, {ae, cowboy}},
+        {aeserialization, {ae, aeserialization}},
+        {jsx, {ae, jsx}},
         ...
        ]}.
 ```
+
+(Strictly speaking, the 2nd element in the `{ae,...}` tuple can be anything, as the plugin
+currently ignores it. Rebar3 seems to expect a 2-tuple, though.)
 
 ### Build the archive file
 

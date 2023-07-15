@@ -33,7 +33,25 @@ needs_update(_AppInfo, _State) ->
     false.
 
 download(TmpDir, AppInfo, State, LState) ->
-    rebar_resource_v2:download(TmpDir, ae_dep_app_info(AppInfo, LState, State), State).
+    try begin
+            Res = rebar_resource_v2:download(TmpDir, ae_dep_app_info(AppInfo, LState, State), State),
+            rebar_api:info("Download Res (~p) => ~p", [rebar_app_info:source(AppInfo), Res]),
+            Res
+        end
+    catch
+        exit:Reason:ST ->
+            rebar_api:error("Failed to download ~p (exit): ~p / ~p",
+                            [rebar_app_info:source(AppInfo), Reason, ST]),
+            exit(Reason);
+        throw:T ->
+            rebar_api:error("Failed to download ~p (throw): ~p",
+                            [rebar_app_info:source(AppInfo), T]),
+            throw(T);
+        error:Reason:ST ->
+            rebar_api:error("Failed to download ~p (error): ~p / ~p",
+                            [rebar_app_info:source(AppInfo), Reason, ST]),
+            error(Reason)
+    end.
 
 make_vsn(AppInfo, LState) ->
     rebar_resource_v2:make_vsn(ae_dep_app_info(AppInfo, LState, undefined), unknown).
@@ -59,8 +77,16 @@ get_ae_root(State) ->
     end.
 
 ae_dep_app_info(AppInfo, LState, State) ->
-    RealSource = get_ae_dep(AppInfo, LState, State),
-    rebar_app_info:source(AppInfo, RealSource).
+    expand_src(get_ae_dep(AppInfo, LState, State), AppInfo, State).
+
+expand_src({pkg, Name, Vsn} = Src0, AppInfo0, State) ->
+    rebar_api:info("Src0 = ~p", [Src0]),
+    AppInfo1 = rebar_app_info:source(AppInfo0, {pkg, Name, Vsn, undefined}),
+    NewAppInfo = rebar_app_utils:expand_deps_sources(AppInfo1, State),
+    rebar_api:info("NewAppInfo = ~p", [NewAppInfo]),
+    NewAppInfo;
+expand_src(_, AppInfo, _) ->
+    AppInfo.
 
 get_ae_dep(AppInfo, LState, State) ->
     Name = rebar_app_info:name(AppInfo),
@@ -82,6 +108,7 @@ get_ae_rebar_lock(#{aeternity_root := AE}, State) ->
                       _ ->
                           []
                   end,
+            rebar_api:info("Rebar lock: ~p", [Res]),
             persistent_term:put(CacheKey, Res),
             save_ae_deps(Res, State),
             Res;
@@ -122,6 +149,7 @@ save_ae_deps(Deps, State) ->
             rebar_api:warn("Cannot save Aeternity deps", []),
             skip;
         File ->
+            rebar_api:info("Saving deps to ~p", [File]),
             save_term(Deps, File)
     end.
 

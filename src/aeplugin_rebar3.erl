@@ -70,6 +70,9 @@ to_list(Dir, Type, Files) ->
                           TypeIndex = string:str(Split, [Type]),
                           Path = filename:join(lists:reverse(lists:sublist(Split, TypeIndex))),
                           {true, {filename:join([Dir, Path]), Bin}};
+                        {error, eisdir} ->
+                          rebar_api:warn("Skipping empty dir (~s)", [File]),
+                          false;
                         {error, Reason} ->
                           rebar_api:warn("Can't read file: ~p", [Reason]),
                           false

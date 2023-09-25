@@ -57,8 +57,8 @@ files(MainApp, Deps, State) ->
 app_files(App) ->
     [Name, Vsn, EbinDir, PrivDir] = [rebar_app_info:F(App) || F <- [name, vsn, ebin_dir, priv_dir]],
     Dir = to_string([Name, "-", Vsn]),
-    Priv = filelib:wildcard(filename:join(PrivDir, "**/*"), file),
-    Ebin = filelib:wildcard(filename:join(EbinDir, "*.{beam,app}"), file),
+    Priv = files_in_dir(PrivDir),
+    Ebin = files_in_dir(EbinDir),
     to_list(Dir, "ebin", Ebin)
         ++ to_list(Dir, "priv", Priv).
 
@@ -70,14 +70,16 @@ to_list(Dir, Type, Files) ->
                           TypeIndex = string:str(Split, [Type]),
                           Path = filename:join(lists:reverse(lists:sublist(Split, TypeIndex))),
                           {true, {filename:join([Dir, Path]), Bin}};
-                        {error, eisdir} ->
-                          rebar_api:warn("Skipping empty dir (~s)", [File]),
-                          false;
                         {error, Reason} ->
                           rebar_api:warn("Can't read file: ~p", [Reason]),
                           false
                       end
                   end, Files).
+
+files_in_dir(Dir) ->
+    lists:reverse(
+      filelib:fold_files(Dir, ".*", true,
+                         fun(F, Acc) -> [F|Acc] end, [])).
 
 to_string(List) ->
   binary_to_list(iolist_to_binary(List)).

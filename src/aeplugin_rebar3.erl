@@ -98,7 +98,8 @@ ext_deps(App, State) ->
             ExtDeps = lists:foldr(
                         fun(A, Acc) ->
                                 Name = element(1, A),
-                                case lists:keymember(Name, 1, AeDeps) of
+                                case lists:keymember(Name, 1, AeDeps)
+                                    orelse lists:member(Name, Acc) of
                                     true ->
                                         Acc;
                                     false ->

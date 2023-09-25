@@ -33,7 +33,8 @@ needs_update(_AppInfo, _State) ->
     false.
 
 download(TmpDir, AppInfo, State, LState) ->
-    rebar_resource_v2:download(TmpDir, ae_dep_app_info(AppInfo, LState, State), State).
+    AppInfo1 = ae_dep_app_info(AppInfo, LState, State),
+    rebar_resource_v2:download(TmpDir, AppInfo1, State).
 
 make_vsn(AppInfo, LState) ->
     rebar_resource_v2:make_vsn(ae_dep_app_info(AppInfo, LState, undefined), unknown).
@@ -59,8 +60,14 @@ get_ae_root(State) ->
     end.
 
 ae_dep_app_info(AppInfo, LState, State) ->
-    RealSource = get_ae_dep(AppInfo, LState, State),
-    rebar_app_info:source(AppInfo, RealSource).
+    Dep = get_ae_dep(AppInfo, LState, State),
+    expand_src(Dep, AppInfo, State).
+
+expand_src({pkg, Name, Vsn}, AppInfo0, State) ->
+    AppInfo1 = rebar_app_info:source(AppInfo0, {pkg, Name, Vsn, undefined}),
+    rebar_app_utils:expand_deps_sources(AppInfo1, State);
+expand_src(Dep, AppInfo, _) ->
+    rebar_app_info:source(AppInfo, Dep).
 
 get_ae_dep(AppInfo, LState, State) ->
     Name = rebar_app_info:name(AppInfo),
@@ -122,6 +129,7 @@ save_ae_deps(Deps, State) ->
             rebar_api:warn("Cannot save Aeternity deps", []),
             skip;
         File ->
+            rebar_api:info("Saving deps to ~p", [File]),
             save_term(Deps, File)
     end.
 

@@ -57,8 +57,8 @@ files(MainApp, Deps, State) ->
 app_files(App) ->
     [Name, Vsn, EbinDir, PrivDir] = [rebar_app_info:F(App) || F <- [name, vsn, ebin_dir, priv_dir]],
     Dir = to_string([Name, "-", Vsn]),
-    Priv = filelib:wildcard(filename:join(PrivDir, "**/*"), file),
-    Ebin = filelib:wildcard(filename:join(EbinDir, "*.{beam,app}"), file),
+    Priv = files_in_dir(PrivDir),
+    Ebin = files_in_dir(EbinDir),
     to_list(Dir, "ebin", Ebin)
         ++ to_list(Dir, "priv", Priv).
 
@@ -75,6 +75,11 @@ to_list(Dir, Type, Files) ->
                           false
                       end
                   end, Files).
+
+files_in_dir(Dir) ->
+    lists:reverse(
+      filelib:fold_files(Dir, ".*", true,
+                         fun(F, Acc) -> [F|Acc] end, [])).
 
 to_string(List) ->
   binary_to_list(iolist_to_binary(List)).
@@ -93,7 +98,8 @@ ext_deps(App, State) ->
             ExtDeps = lists:foldr(
                         fun(A, Acc) ->
                                 Name = element(1, A),
-                                case lists:keymember(Name, 1, AeDeps) of
+                                case lists:keymember(Name, 1, AeDeps)
+                                    orelse lists:member(Name, Acc) of
                                     true ->
                                         Acc;
                                     false ->
